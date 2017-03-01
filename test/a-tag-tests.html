@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"
+   ></script>
+  <script src="../bower_components/web-component-tester/browser.js"></script>
+  <link rel="import" href="../src/polymer-resin.html" />
+  <title>A Tag Tests</title>
+</head>
+<body>
+  <dom-module id="items-to-check">
+    <template>
+      <ul>
+        <li><a id="a1" href="{{innocuousString}}">Innocuous</a>
+        <li><a id="a2" href="{{safeUrl}}">SafeUrl</a>
+        <li><a id="a3" href="{{evilPayload}}">Unsafe</a>
+      </ul>
+    </template>
+    <script>
+      Polymer({
+        is: 'items-to-check',
+        properties: {
+          innocuousString: String,
+          safeUrl: String,
+          evilPayload: String
+        }
+      });
+    </script>
+  </dom-module>
+
+  <items-to-check id="to-check"
+    innocuous-string="http://example.com/ok"
+    evil-payload="javascript:doEvil()">
+
+  <script>
+  suite(
+      'ATagtests',
+
+      function() {
+        var toCheck = document.getElementById('to-check');
+        var root = toCheck.shadowRoot;
+
+        toCheck.safeUrl = goog.html.SafeUrl.fromConstant(
+            goog.string.Const.from('javascript:safe()'));
+
+        test('innocuous_string', function() {
+          assert.equal(
+              root.getElementById('a1').href,
+              'http://example.com/ok');
+        });
+        test('safe_url', function() {
+          assert.equal(
+              root.getElementById('a2').href,
+              'javascript:safe()');
+        });
+        test('evil_payload', function() {
+          assert.equal(
+              root.getElementById('a3').href,
+              'about:invalid#zClosurez');
+        });
+      });
+  </script>
+</body>
+</html>

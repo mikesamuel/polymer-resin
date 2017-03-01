@@ -1,0 +1,15 @@
+# Running tests from the command line
+
+Per https://github.com/Polymer/web-component-tester
+make sure that $PWD/node_modules/.bin is on your path then run
+
+$ wct
+
+
+# Running tests in the browser
+
+From the project root
+
+$ python -m SimpleHTTPServer 8000
+
+Then browse to http://localhost:8000/test/

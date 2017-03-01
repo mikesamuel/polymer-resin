@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- Dependencies for polymer-resin.js which is loaded synchronously
+         so that it reliably runs before application boot. -->
+    <link rel="import" href="../bower_components/polymer/polymer.html">
+    <script src="../lib/closure-deps.js"></script>
+    <script>
+// TODO: check that this is running early in the application booting
+// process.  Maybe check that web components are not ready.
+// Will that cause problems if parts of the web components API are defined
+// natively instead of polyfilled?
+
+(function () {
+  "use strict";
+
+  function initResin() {
+
+    /**
+     * Filters and unwraps new property values in preparation for them
+     * being attached to custom elements.
+     *
+     * @param {Element} element the custom element
+     * @param {string} name the name of the property
+     * @param {string{ type whether name is a 'property' or 'attribute' name.
+     * @param {*} a value that may have originated outside this document's
+     *    origin.
+     * @return {*} a value that is safe to embed in this document's origin.
+     */
+    function sanitize(element, name, type, value) {
+      switch (type) {
+      case 'attribute':
+        break;
+      case 'property':
+        break;
+      default:
+        throw new Error(type);
+      }
+      var safeValue = value;
+      if (name === 'href' || name === 'src'
+          || /^on/.test(name) || name === 'style') {
+        if (safeValue instanceof goog.html.SafeUrl) {
+          safeValue = goog.html.SafeUrl.unwrap(safeValue);
+        } else if (/^javascript:/.test(safeValue)) {
+          safeValue = goog.html.SafeUrl.INNOCUOUS_STRING;
+        }
+      }
+//      console.log('element=%s, name=%s, type=%s, value=%o, safeValue=%o',
+//                  (element ? element.nodeName : null), name, type, value,
+//                  safeValue);
+      return safeValue;
+    }
+
+    // Now, install the sanitizer.
+    // There are two code-paths below for Polymer V1 and V2.
+    // The code could be consolidated, except that
+    // 1. In both cases I want to first delegate to any previously
+    //    registered handler.
+    // 2. If I tried to express the V1 logic in terms of V2, I would need
+    //    to thread the info object through somehow hacky.
+    // 3. I don't want to express the V2 logic in terms of V1 since the V1
+    //    will hopefully eventually go away entirely.
+    // So I just duplicate the logic which goes through these steps:
+    // 1. fetch any previously declared function
+    // 2. define an adapter
+    // 3. install the adapter
+    // 4. sanity check that the adapter was installed.
+    if (/^1./.test(Polymer.version)) {
+      // sanitizeDOMValue is not defined for v1.
+      var origCompute = Polymer.Base._computeFinalAnnotationValue;
+      var computeFinalAnnotationSafeValue =
+          function computeFinalAnnotationValue(node, property, value, info) {
+            var finalValue = origCompute.call(
+                Polymer.Base, node, property, value, info);
+            return sanitize(node, property, info.type, finalValue);
+          };
+      Polymer.Base._computeFinalAnnotationValue =
+          computeFinalAnnotationValue;
+      if (Polymer.Base._computeFinalAnnotationValue
+          !== computeFinalAnnotationValue) {
+        // We're in use strict, so assignment should fail-fast, but
+        // this is cheap.
+        throw new Error(
+            'Cannot install sanitizeDOMValue.  Is Polymer frozen?');
+      }
+    } else {
+      var origSanitize = Polymer.sanitizeDOMValue;
+      var sanitizeDOMValue =
+          function sanitizeDOMValue(value, name, type, node) {
+            var sanitizedValue = origSanitize
+                ? origSanitize.call(Polymer, value, name, type, node)
+                : value;
+            return sanitize(node, name, type, sanitizedValue);
+          };
+      Polymer.sanitizeDOMValue = sanitizeDOMValue;
+      if (Polymer.sanitizeDOMValue !== sanitizeDOMValue) {
+        // We're in use strict, so assignment should fail-fast, but
+        // this is cheap.
+        throw new Error(
+            'Cannot install sanitizeDOMValue.  Is Polymer frozen?');
+      }
+    }
+  }
+
+  if (typeof Polymer !== 'undefined' && Polymer.version) {
+    initResin();
+  } else {
+    window.addEventListener('HTMLImportsLoaded', initResin);
+  }
+}());
+</script>
+  </head>
+  <body></body>
+</html>

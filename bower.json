@@ -1,0 +1,22 @@
+{
+  "name": "resin",
+  "authors": [
+    "Mike Samuel <mikesamuel@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "Apache",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#2.0-preview",
+    "web-component-tester": "Polymer/web-component-tester#^5.0.0",
+  }
+}
