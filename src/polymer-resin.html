@@ -23,7 +23,7 @@
      *
      * @param {Element} element the custom element
      * @param {string} name the name of the property
-     * @param {string{ type whether name is a 'property' or 'attribute' name.
+     * @param {string} type whether name is a 'property' or 'attribute' name.
      * @param {*} a value that may have originated outside this document's
      *    origin.
      * @return {*} a value that is safe to embed in this document's origin.
@@ -68,6 +68,7 @@
     // 4. sanity check that the adapter was installed.
     if (/^1./.test(Polymer.version)) {
       // sanitizeDOMValue is not defined for v1.
+      // See https://github.com/Polymer/polymer/issues/4138
       var origCompute = Polymer.Base._computeFinalAnnotationValue;
       var computeFinalAnnotationSafeValue =
           function computeFinalAnnotationValue(node, property, value, info) {
